@@ -1,6 +1,6 @@
 const users = [
-    { username: "user1", password: "pass1" },
-    { username: "user2", password: "pass2" }
+    { username: "1", password: "2" },
+    { username: "admin", password: "adminaud" }
 ];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const user = users.find(u => u.username === login && u.password === password);
             if (user) {
+                
                 alert('Успешная авторизация!');
+                document.getElementById("popup").style.display = "none";
             } else {
                 alert('Неверный логин или пароль.');
             }
@@ -58,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (target === "Аудитория № 218") {
                 const specialHeading = Array.from(targetHeadings).find(targetHeading => 
-                    targetHeading.innerText.includes("Аудитория № 227(218)")
+                    targetHeading.innerText.includes("Аудитория № 218")
                 ); 
                 if (specialHeading) {
                     specialHeading.scrollIntoView({ behavior: 'smooth' });
@@ -126,7 +128,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
 
 
 
@@ -240,3 +241,39 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('popup').style.display = 'none';
     };
 });
+
+
+
+
+document.getElementById("addprob1").onclick = function() {
+    document.getElementById("popip").style.display = "flex";
+}
+document.getElementById("addprob2").onclick = function() {
+    document.getElementById("popip").style.display = "flex";
+}
+document.getElementById("addprob3").onclick = function() {
+    document.getElementById("popip").style.display = "flex";
+}
+document.getElementById("addprob4").onclick = function() {
+    document.getElementById("popip").style.display = "flex";
+}
+document.getElementById("addprob5").onclick = function() {
+    document.getElementById("popip").style.display = "flex";
+}
+document.getElementById("addprob6").onclick = function() {
+    document.getElementById("popip").style.display = "flex";
+}
+document.getElementById("delprob").onclick = function() {
+    document.getElementById("popip").style.display = "none";
+}
+
+
+document.getElementById("popup").style.display = "flex";
+
+
+document.getElementById("closePopup").onclick = function() {
+    document.getElementById("popup").style.display = "none";
+}
+
+// Функции для открытия и закрытия поп-ап окна
+
