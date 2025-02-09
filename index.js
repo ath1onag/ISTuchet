@@ -133,67 +133,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-
-
-
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Открытие окна проблем при клике на иконку компьютера
-    const pcIcons = document.querySelectorAll('.pc img');
-    const problemMenu = document.querySelector('.menu');
-    const problemTitle = problemMenu.querySelector('.zag_menu');
+    let selectedAuditoriumContainer = null;
     let selectedPc = null;
-    let problemsData = new Map();
-
-    pcIcons.forEach((icon, index) => {
-        problemsData.set(index, []);
-        icon.addEventListener('click', function() {
-            selectedPc = index;
-            problemTitle.textContent = `Компьютер №${index + 1}`;
-            updateProblemList();
-            problemMenu.classList.add('visible');
-        });
-    });
-
-    function updateProblemList() {
-        const problemContainer = problemMenu.querySelector('.problem');
-        problemContainer.innerHTML = '';
-        problemsData.get(selectedPc).forEach(problem => {
-            const problemDiv = document.createElement('div');
-            problemDiv.classList.add('problem_text');
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.classList.add('write', 'text', problem.severity);
-            input.value = problem.text;
-            input.disabled = true;
-            
-            const resolveButton = document.createElement('button');
-            resolveButton.classList.add('button_problem', 'text');
-            resolveButton.textContent = 'Решено';
-            resolveButton.addEventListener('click', function() {
-                problemsData.set(selectedPc, problemsData.get(selectedPc).filter(p => p !== problem));
-                updateProblemList();
-                updatePcIconColor();
-            });
-
-            problemDiv.appendChild(input);
-            problemDiv.appendChild(resolveButton);
-            problemContainer.appendChild(problemDiv);
-        });
-        updatePcIconColor();
-    }
-
-    // Открытие окна добавления проблемы
-    const addProblemButton = document.querySelector('.button_save.text');
-    const newProblemModal = document.querySelector('.new_problem');
-    addProblemButton.addEventListener('click', function() {
-        newProblemModal.classList.add('visible');
-    });
-
-    // Добавление проблемы
+    const auditoriumProblems = new Map();
+    const newProblemModal = document.getElementById('popip');
     const problemInput = document.querySelector('.problem_input_write');
-    const addProblemConfirmButton = document.querySelector('.problem_input_button');
+    const addProblemConfirmButton = document.getElementById('delprob');
     const severityButtons = document.querySelectorAll('.button_new_Problem');
     let problemSeverity = 'yellow';
 
@@ -203,21 +149,94 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    function updatePcIconColor(container) {
+        const pcIcons = container.querySelectorAll('.pc img');
+        const computersProblems = auditoriumProblems.get(container);
+        pcIcons.forEach((icon, idx) => {
+            if (computersProblems[idx].length === 0) {
+                icon.style.filter = 'none';
+            } else {
+                const hasCritical = computersProblems[idx].some(p => p.severity === 'red');
+                icon.style.filter = hasCritical ? 'invert(34%) sepia(88%) saturate(7492%) hue-rotate(357deg) brightness(105%) contrast(110%)' 
+                                               : 'invert(83%) sepia(39%) saturate(421%) hue-rotate(356deg) brightness(99%) contrast(95%)';
+            }
+        });
+    }
+
+    function updateProblemList(container, pcIndex) {
+        const computersProblems = auditoriumProblems.get(container);
+        const menuElement = container.querySelector('.menu');
+        const problemContainer = menuElement.querySelector('.problem');
+        problemContainer.innerHTML = '';
+
+        computersProblems[pcIndex].forEach((problem, problemIndex) => {
+            const problemDiv = document.createElement('div');
+            problemDiv.classList.add('problem_text');
+            
+            const input = document.createElement('div');
+            input.classList.add('write', problem.severity);
+            input.innerHTML = `<p class="text pad">${problem.text}</p>`;
+            
+            const resolveButton = document.createElement('button');
+            resolveButton.classList.add('button_problem', 'text');
+            resolveButton.textContent = 'Решено';
+            resolveButton.addEventListener('click', function() {
+                computersProblems[pcIndex].splice(problemIndex, 1);
+                updateProblemList(container, pcIndex);
+                updatePcIconColor(container);
+            });
+
+            problemDiv.appendChild(input);
+            problemDiv.appendChild(resolveButton);
+            problemContainer.appendChild(problemDiv);
+        });
+
+        const addButton = document.createElement('button');
+        addButton.classList.add('button_save', 'text');
+        addButton.textContent = 'Добавить проблему';
+        addButton.addEventListener('click', function() {
+            selectedAuditoriumContainer = container;
+            selectedPc = pcIndex;
+            newProblemModal.style.display = 'flex';
+        });
+        problemContainer.appendChild(addButton);
+
+        updatePcIconColor(container);
+    }
+
+    const auditoriumContainers = Array.from(document.querySelectorAll('.container')).filter(container => container.querySelector('.pc'));
+    auditoriumContainers.forEach(container => {
+        const pcIcons = container.querySelectorAll('.pc img');
+        const computersProblems = Array.from({ length: pcIcons.length }, () => []);
+        auditoriumProblems.set(container, computersProblems);
+
+        pcIcons.forEach((icon, index) => {
+            icon.addEventListener('click', function(event) {
+                event.preventDefault();
+                selectedAuditoriumContainer = container;
+                selectedPc = index;
+                const menuElement = container.querySelector('.menu');
+                menuElement.querySelector('.zag_menu').textContent = `Компьютер №${index + 1}`;
+                updateProblemList(container, index);
+                menuElement.classList.add('visible');
+            });
+        });
+    });
+
     addProblemConfirmButton.addEventListener('click', function() {
-        if (selectedPc !== null && problemInput.value.trim() !== '') {
-            problemsData.get(selectedPc).push({ text: problemInput.value, severity: problemSeverity });
-            updateProblemList();
+        if (selectedAuditoriumContainer && selectedPc !== null && problemInput.value.trim() !== '') {
+            const computersProblems = auditoriumProblems.get(selectedAuditoriumContainer);
+            computersProblems[selectedPc].push({ text: problemInput.value, severity: problemSeverity });
+            updateProblemList(selectedAuditoriumContainer, selectedPc);
             problemInput.value = '';
-            newProblemModal.classList.remove('visible');
+            newProblemModal.style.display = 'none';
         } else {
             alert('Выберите компьютер и введите проблему!');
         }
     });
 
-    function updatePcIconColor() {
-        pcIcons.forEach((icon, index) => {
-            const hasRed = problemsData.get(index).some(p => p.severity === 'red');
-            icon.style.border = hasRed ? '3px solid red' : '3px solid yellow';
-        });
-    }
+    document.getElementById('popup').style.display = 'flex';
+    document.getElementById('closePopup').onclick = function() {
+        document.getElementById('popup').style.display = 'none';
+    };
 });
