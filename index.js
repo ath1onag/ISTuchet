@@ -134,6 +134,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+
+
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
     let selectedAuditoriumContainer = null;
     let selectedPc = null;
@@ -164,34 +169,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function updateProblemList(container, pcIndex) {
-        const computersProblems = auditoriumProblems.get(container);
+    async function updateProblemList(container, pcIndex) {
         const menuElement = container.querySelector('.menu');
         const problemContainer = menuElement.querySelector('.problem');
         problemContainer.innerHTML = '';
-
-        computersProblems[pcIndex].forEach((problem, problemIndex) => {
+    
+        const auditoriumNumber = container.querySelector('.zag').textContent.match(/\d+/)[0]; // Извлекаем номер аудитории
+        const response = await fetch(`http://localhost:3000/problems?auditorium=${auditoriumNumber}&computer=${pcIndex + 1}`);
+        const problems = await response.json();
+    
+        problems.forEach(problem => {
             const problemDiv = document.createElement('div');
             problemDiv.classList.add('problem_text');
-            
+    
             const input = document.createElement('div');
             input.classList.add('write', problem.severity);
             input.innerHTML = `<p class="text pad">${problem.text}</p>`;
-            
+    
             const resolveButton = document.createElement('button');
             resolveButton.classList.add('button_problem', 'text');
             resolveButton.textContent = 'Решено';
-            resolveButton.addEventListener('click', function() {
-                computersProblems[pcIndex].splice(problemIndex, 1);
+            resolveButton.addEventListener('click', async function() {
+                await fetch(`http://localhost:3000/problems/${problem._id}`, { method: 'DELETE' });
                 updateProblemList(container, pcIndex);
                 updatePcIconColor(container);
             });
-
+    
             problemDiv.appendChild(input);
             problemDiv.appendChild(resolveButton);
             problemContainer.appendChild(problemDiv);
         });
-
+    
         const addButton = document.createElement('button');
         addButton.classList.add('button_save', 'text');
         addButton.textContent = 'Добавить проблему';
@@ -201,9 +209,10 @@ document.addEventListener('DOMContentLoaded', function() {
             newProblemModal.style.display = 'flex';
         });
         problemContainer.appendChild(addButton);
-
+    
         updatePcIconColor(container);
     }
+    
 
     const auditoriumContainers = Array.from(document.querySelectorAll('.container')).filter(container => container.querySelector('.pc'));
     auditoriumContainers.forEach(container => {
@@ -222,12 +231,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 menuElement.classList.add('visible');
             });
         });
+        
     });
 
-    addProblemConfirmButton.addEventListener('click', function() {
+    addProblemConfirmButton.addEventListener('click', async function() {
         if (selectedAuditoriumContainer && selectedPc !== null && problemInput.value.trim() !== '') {
-            const computersProblems = auditoriumProblems.get(selectedAuditoriumContainer);
-            computersProblems[selectedPc].push({ text: problemInput.value, severity: problemSeverity });
+            const auditoriumNumber = selectedAuditoriumContainer.querySelector('.zag').textContent.match(/\d+/)[0];
+    
+            const problemData = {
+                auditorium: auditoriumNumber,
+                computer: selectedPc + 1,
+                text: problemInput.value,
+                severity: problemSeverity
+            };
+    
+            await fetch('http://localhost:3000/problems', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(problemData)
+            });
+    
             updateProblemList(selectedAuditoriumContainer, selectedPc);
             problemInput.value = '';
             newProblemModal.style.display = 'none';
@@ -235,12 +258,19 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Выберите компьютер и введите проблему!');
         }
     });
-
-    document.getElementById('popup').style.display = 'flex';
-    document.getElementById('closePopup').onclick = function() {
-        document.getElementById('popup').style.display = 'none';
-    };
+    
 });
+
+
+
+
+
+
+
+ 
+
+
+
 
 
 
@@ -276,4 +306,6 @@ document.getElementById("closePopup").onclick = function() {
 }
 
 // Функции для открытия и закрытия поп-ап окна
+
+
 
